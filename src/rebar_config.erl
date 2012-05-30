@@ -26,8 +26,8 @@
 %% -------------------------------------------------------------------
 -module(rebar_config).
 
--export([new/0, new/1, base_config/1, consult_file/1,
-         consult_script/1, consult_files/2,
+-export([new/0, new/1, base_config/1, global_config/1,
+         consult_file/1, consult_script/1, consult_files/2,
          get/3, get_local/3, get_list/3,
          get_all/2,
          set/3,
@@ -62,17 +62,21 @@ base_config(Parent = #config{opts=Opts0}) ->
             new(Opts0, best_format_match(ConfName, Parent))
     end.
 
+global_config(ExtraOpts) ->
+  ConfigDir = filename:join([os:getenv("HOME"), ".rebar"]),
+
+  case consult_files(ConfigDir, get_formats(#config{opts=ExtraOpts})) of
+      {ok, Opts} ->
+          ?DEBUG("Using global config file", []),
+          #config { dir = rebar_utils:get_cwd(),
+                    opts = Opts ++ ExtraOpts };
+      _Other ->
+          new()
+  end.
+
 new() ->
     #config{dir = rebar_utils:get_cwd()}.
 
-new(ConfigDir) when is_list(ConfigDir) ->
-    case consult_files(ConfigDir, default_formats()) of
-        {ok, Opts} ->
-            #config { dir = rebar_utils:get_cwd(),
-                      opts = Opts };
-        _ ->
-            new()
-    end;
 new(Parent=#config{opts=Opts0})->
     new(Opts0, get_formats(Parent)).
 
