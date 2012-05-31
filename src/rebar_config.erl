@@ -65,14 +65,15 @@ base_config(Parent = #config{opts=Opts0}) ->
 global_config(ExtraOpts) ->
   ConfigDir = filename:join([os:getenv("HOME"), ".rebar"]),
 
-  case consult_files(ConfigDir, get_formats(#config{opts=ExtraOpts})) of
-      {ok, Opts} ->
+  Opts = case consult_files(ConfigDir, get_formats(#config{opts=ExtraOpts})) of
+      {ok, GlobalOpts} ->
           ?DEBUG("Using global config file", []),
-          #config { dir = rebar_utils:get_cwd(),
-                    opts = Opts ++ ExtraOpts };
+          ExtraOpts ++ GlobalOpts;
       _Other ->
-          new()
-  end.
+          ExtraOpts
+  end,
+
+  #config { dir = rebar_utils:get_cwd(), opts = Opts }.
 
 new() ->
     #config{dir = rebar_utils:get_cwd()}.
